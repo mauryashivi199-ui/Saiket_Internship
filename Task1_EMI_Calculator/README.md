@@ -9,7 +9,9 @@ This project includes **3 Interfaces** to showcase flexibility and high-quality 
 
 ---
 
-## 🧮 Mathematical Formula
+## 🧮 Mathematical Formula Used
+
+![Task 1 Backend Architecture](task1_backend_architecture.jpg)
 
 $$EMI = P \times r \times \frac{(1+r)^N}{(1+r)^N - 1}$$
 

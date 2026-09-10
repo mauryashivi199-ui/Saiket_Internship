@@ -8,6 +8,8 @@ A comprehensive multi-interface application that fetches, parses, filters, searc
 
 ## 🎯 Features Implemented
 
+![Task 2 Backend Architecture](task2_backend_architecture.jpg)
+
 1. **Multiple Public REST Endpoints**:
    - 📦 **Products Catalog API**: `https://dummyjson.com/products`
    - 👥 **User Directory API**: `https://jsonplaceholder.typicode.com/users`
