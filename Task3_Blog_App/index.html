@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevBlog Studio - Blog App with Local Storage | Saiket Internship</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Newsreader for editorial feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-serif-editorial { font-family: 'Newsreader', serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center">
+
+  <!-- Header & Navbar -->
+  <header class="w-full border-b border-slate-800 bg-slate-900/70 backdrop-blur sticky top-0 z-30 px-4 md:px-8 py-4">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <span class="p-2.5 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30 text-2xl">📝</span>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+            DevBlog Studio
+          </h1>
+          <p class="text-slate-400 text-xs">Saiket Internship • Task 3: Blog App + LocalStorage</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3">
+        <button onclick="openEditorModal()" 
+          class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition transform active:scale-95">
+          <span>✍️</span> Write New Post
+        </button>
+        <button onclick="exportJSONBackup()" title="Download LocalStorage Backup"
+          class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs px-3 py-2.5 rounded-xl transition">
+          💾 Export JSON
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Controls & Category Filter Bar -->
+  <div class="w-full max-w-7xl px-4 md:px-8 py-6 space-y-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+      
+      <!-- Search Input -->
+      <div class="relative flex-1">
+        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search blog articles by title, content, or author..."
+          class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition">
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="flex flex-wrap items-center gap-2" id="categoryPills">
+        <button onclick="setCategoryFilter('ALL')" class="category-pill active px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition">All</button>
+        <button onclick="setCategoryFilter('Technology')" class="category-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition">Technology</button>
+        <button onclick="setCategoryFilter('Web Dev')" class="category-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition">Web Dev</button>
+        <button onclick="setCategoryFilter('Career')" class="category-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition">Career</button>
+      </div>
+
+    </div>
+
+    <!-- Status indicator -->
+    <div class="flex justify-between items-center text-xs text-slate-400 px-1">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>Synced with Browser <code>localStorage</code></span>
+      </div>
+      <div id="postsCountText">0 articles found</div>
+    </div>
+  </div>
+
+  <!-- Main Feed Grid -->
+  <main class="w-full max-w-7xl px-4 md:px-8 pb-16 flex-1">
+    <div id="blogsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyFeed" class="hidden text-center py-20 bg-slate-900/40 rounded-2xl border border-slate-800">
+      <span class="text-4xl mb-3 block">📭</span>
+      <h3 class="text-lg font-semibold text-slate-300">No blog posts found</h3>
+      <p class="text-sm text-slate-500 mt-1">Be the first to publish a new article or change your filter.</p>
+      <button onclick="openEditorModal()" class="mt-4 px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl">Create Post</button>
+    </div>
+  </main>
+
+  <!-- Reading Article Modal -->
+  <div id="readModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar p-6 md:p-8 relative shadow-2xl">
+      <button onclick="closeReadModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white text-xl p-1.5 bg-slate-800 rounded-lg">✕</button>
+      <div id="readModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Write/Edit Article Modal -->
+  <div id="editorModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 md:p-8 relative shadow-2xl space-y-4">
+      <button onclick="closeEditorModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white text-xl p-1 bg-slate-800 rounded-lg">✕</button>
+      <h2 id="editorTitle" class="text-xl font-bold text-white">✍️ Publish New Article</h2>
+      
+      <form id="postForm" onsubmit="handleSavePost(event)" class="space-y-4">
+        <input type="hidden" id="postId" />
+        
+        <div>
+          <label class="text-xs font-semibold text-slate-300 block mb-1">Article Title *</label>
+          <input type="text" id="postTitleInput" required placeholder="Enter compelling title..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-semibold text-slate-300 block mb-1">Category *</label>
+            <select id="postCategoryInput" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+              <option value="Technology">Technology</option>
+              <option value="Web Dev">Web Dev</option>
+              <option value="Career">Career</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-300 block mb-1">Author Name *</label>
+            <input type="text" id="postAuthorInput" value="Shivangi Maurya" required
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-300 block mb-1">Article Content *</label>
+          <textarea id="postContentInput" rows="7" required placeholder="Write your thoughts here..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-indigo-500 leading-relaxed"></textarea>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-indigo-600/20">
+          💾 Save Post to LocalStorage
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Application Logic -->
+  <script>
+    const STORAGE_KEY = "saiket_devblog_posts";
+
+    const DEFAULT_SEED_POSTS = [
+      {
+        id: 1,
+        title: "Mastering Python & Modern Backend Architecture",
+        author: "Shivangi Maurya",
+        category: "Technology",
+        content: "Python is a powerhouse for modern backend systems, automation, and AI integrations. With its clean syntax, massive library ecosystems, and built-in asynchronous capabilities, building scalable applications has never been easier. In this guide, we explore how clean code design and proper abstraction elevate internship projects into industry-grade applications.",
+        date: "2026-09-15 10:30",
+        likes: 18
+      },
+      {
+        id: 2,
+        title: "Why Local Storage & Offline-First Apps Matter",
+        author: "Tech Insights",
+        category: "Web Dev",
+        content: "Local Storage allows web and client applications to save user state and documents directly inside the device's persistent storage engine. Even without an active internet connection, users can read, edit, draft, and create content seamlessly without network lag.",
+        date: "2026-09-18 14:20",
+        likes: 12
+      },
+      {
+        id: 3,
+        title: "5 Proven Tips for Cracking Software Internship Interviews",
+        author: "Career Guide",
+        category: "Career",
+        content: "1. Strong fundamentals in Data Structures & Core Logic\n2. Clean GitHub repository presentations with documented READMEs\n3. Clear explanation of mathematical concepts\n4. Responsive UI design & edge-case error handling\n5. Confident communication and problem-solving mindset.",
+        date: "2026-09-19 08:00",
+        likes: 29
+      }
+    ];
+
+    let currentCategory = 'ALL';
+    let searchQuery = '';
+
+    // Get posts from localStorage
+    function getPosts() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SEED_POSTS));
+        return DEFAULT_SEED_POSTS;
+      }
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return DEFAULT_SEED_POSTS;
+      }
+    }
+
+    // Save posts to localStorage
+    function savePosts(posts) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+      renderFeed();
+    }
+
+    // Render Posts Grid
+    function renderFeed() {
+      const posts = getPosts();
+      const grid = document.getElementById('blogsGrid');
+      const emptyFeed = document.getElementById('emptyFeed');
+      const postsCountText = document.getElementById('postsCountText');
+
+      const filtered = posts.filter(p => {
+        const matchesCat = currentCategory === 'ALL' || p.category === currentCategory;
+        const matchesQuery = !searchQuery || 
+          p.title.toLowerCase().includes(searchQuery) || 
+          p.content.toLowerCase().includes(searchQuery) ||
+          p.author.toLowerCase().includes(searchQuery);
+        return matchesCat && matchesQuery;
+      });
+
+      postsCountText.innerText = `Showing ${filtered.length} of ${posts.length} articles`;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        emptyFeed.classList.remove('hidden');
+        return;
+      }
+
+      emptyFeed.classList.add('hidden');
+      grid.innerHTML = filtered.map(post => `
+        <article class="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 p-6 rounded-2xl flex flex-col justify-between transition transform hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 group">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+                ${post.category}
+              </span>
+              <span class="text-xs text-slate-500">${post.date.split(' ')[0]}</span>
+            </div>
+            
+            <h3 onclick="openReadModal(${post.id})" class="text-lg font-bold text-slate-100 group-hover:text-indigo-400 cursor-pointer transition line-clamp-2 mb-2">
+              ${post.title}
+            </h3>
+            
+            <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed mb-4">
+              ${post.content}
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-slate-400 font-medium">By <strong class="text-slate-200">${post.author}</strong></span>
+            
+            <div class="flex items-center gap-2">
+              <button onclick="likePost(${post.id})" class="flex items-center gap-1 text-rose-400 hover:bg-rose-500/10 px-2 py-1 rounded-lg transition">
+                <span>❤️</span> <span class="font-bold">${post.likes || 0}</span>
+              </button>
+              <button onclick="openEditorModal(${post.id})" title="Edit Post" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+                ✏️
+              </button>
+              <button onclick="deletePost(${post.id})" title="Delete Post" class="text-red-400 hover:text-red-300 p-1 rounded hover:bg-slate-800 transition">
+                🗑️
+              </button>
+            </div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    // Like Post
+    function likePost(id) {
+      const posts = getPosts();
+      const p = posts.find(x => x.id === id);
+      if (p) {
+        p.likes = (p.likes || 0) + 1;
+        savePosts(posts);
+      }
+    }
+
+    // Delete Post
+    function deletePost(id) {
+      if (confirm("Are you sure you want to delete this blog post from Local Storage?")) {
+        const posts = getPosts().filter(x => x.id !== id);
+        savePosts(posts);
+      }
+    }
+
+    // Read Article Modal
+    function openReadModal(id) {
+      const post = getPosts().find(x => x.id === id);
+      if (!post) return;
+
+      const body = document.getElementById('readModalBody');
+      body.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center gap-2">
+            <span class="text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">${post.category}</span>
+            <span class="text-xs text-slate-500">• Published on ${post.date}</span>
+          </div>
+          <h1 class="text-2xl md:text-3xl font-bold text-white">${post.title}</h1>
+          <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">${post.author.charAt(0)}</div>
+              <span class="text-xs text-slate-300">Written by <strong class="text-white">${post.author}</strong></span>
+            </div>
+            <button onclick="likePost(${post.id}); openReadModal(${post.id})" class="text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl">
+              ❤️ ${post.likes || 0} Likes
+            </button>
+          </div>
+          <div class="text-sm md:text-base text-slate-300 font-serif-editorial leading-relaxed whitespace-pre-line py-2">
+            ${post.content}
+          </div>
+        </div>
+      `;
+      document.getElementById('readModal').classList.remove('hidden');
+    }
+
+    function closeReadModal() {
+      document.getElementById('readModal').classList.add('hidden');
+    }
+
+    // Editor Modal (Create or Edit)
+    function openEditorModal(id = null) {
+      const modal = document.getElementById('editorModal');
+      const title = document.getElementById('editorTitle');
+      const pId = document.getElementById('postId');
+      const pTitle = document.getElementById('postTitleInput');
+      const pCat = document.getElementById('postCategoryInput');
+      const pAuth = document.getElementById('postAuthorInput');
+      const pCont = document.getElementById('postContentInput');
+
+      if (id) {
+        const post = getPosts().find(x => x.id === id);
+        if (post) {
+          title.innerText = "✏️ Edit Blog Post";
+          pId.value = post.id;
+          pTitle.value = post.title;
+          pCat.value = post.category;
+          pAuth.value = post.author;
+          pCont.value = post.content;
+        }
+      } else {
+        title.innerText = "✍️ Publish New Article";
+        pId.value = "";
+        pTitle.value = "";
+        pCat.value = "Technology";
+        pAuth.value = "Shivangi Maurya";
+        pCont.value = "";
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeEditorModal() {
+      document.getElementById('editorModal').classList.add('hidden');
+    }
+
+    // Save Post Handler
+    function handleSavePost(e) {
+      e.preventDefault();
+      const id = document.getElementById('postId').value;
+      const title = document.getElementById('postTitleInput').value.trim();
+      const category = document.getElementById('postCategoryInput').value;
+      const author = document.getElementById('postAuthorInput').value.trim();
+      const content = document.getElementById('postContentInput').value.trim();
+
+      const posts = getPosts();
+
+      if (id) {
+        // Update
+        const target = posts.find(x => x.id === parseInt(id));
+        if (target) {
+          target.title = title;
+          target.category = category;
+          target.author = author;
+          target.content = content;
+        }
+      } else {
+        // Create
+        const nextId = posts.length ? Math.max(...posts.map(x => x.id)) + 1 : 1;
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        posts.unshift({
+          id: nextId,
+          title,
+          category,
+          author,
+          content,
+          date: dateStr,
+          likes: 0
+        });
+      }
+
+      savePosts(posts);
+      closeEditorModal();
+    }
+
+    // Category Filter
+    function setCategoryFilter(cat) {
+      currentCategory = cat;
+      const buttons = document.querySelectorAll('.category-pill');
+      buttons.forEach(btn => {
+        if (btn.innerText.toUpperCase() === cat.toUpperCase()) {
+          btn.className = "category-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition";
+        } else {
+          btn.className = "category-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition";
+        }
+      });
+      renderFeed();
+    }
+
+    // Search filter event
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      renderFeed();
+    });
+
+    // Export Backup
+    function exportJSONBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(localStorage.getItem(STORAGE_KEY));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "devblog_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // Initial render
+    renderFeed();
+  </script>
+</body>
+</html>
