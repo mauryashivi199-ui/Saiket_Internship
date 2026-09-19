@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Article Reading | Lumina Blog</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Newsreader & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['Newsreader', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white">
+
+  <!-- Reading Progress Bar -->
+  <div id="progressBar" class="fixed top-0 left-0 h-1 bg-gradient-to-r from-orange-500 via-amber-500 to-rose-500 z-50 transition-all duration-100" style="width: 0%"></div>
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-40 bg-[#0b0f19]/85 backdrop-blur-md border-b border-slate-800/80 px-4 md:px-8 py-3.5">
+    <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2 group">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white font-black text-sm shadow-md shadow-orange-500/20">L</div>
+          <span class="text-lg font-bold text-white">Lumina</span>
+        </a>
+        <span class="text-slate-600">/</span>
+        <a href="index.html" class="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition">
+          <span>←</span> Back to Stories
+        </a>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="dashboard.html" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-full transition">Dashboard</a>
+        <a href="create.html" class="px-4 py-1.5 text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 rounded-full transition">✍️ Write Story</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Article Container -->
+  <main class="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12 w-full flex-1">
+    
+    <div id="articleView">
+      <!-- Injected by JavaScript -->
+    </div>
+
+    <!-- Interactive Engagement Bar -->
+    <div id="engagementBar" class="my-10 p-6 bg-slate-900/80 border border-slate-800 rounded-3xl flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <button id="likeBtn" onclick="onLikeClicked()" 
+          class="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold text-sm rounded-full transition transform active:scale-95">
+          <span>❤️ Claps & Likes</span>
+          <span id="likeCount" class="bg-rose-500/20 px-2 py-0.5 rounded-full text-xs">0</span>
+        </button>
+        <button id="bookmarkBtn" onclick="onBookmarkClicked()"
+          class="flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-full border border-slate-700 transition">
+          <span id="bmIcon">📑</span> <span id="bmText">Save to Reading List</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="copyArticleLink()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-full border border-slate-700 transition flex items-center gap-1.5">
+          <span>🔗</span> Share Story
+        </button>
+        <a id="editArticleLink" href="#" class="px-4 py-2.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-semibold rounded-full transition">
+          ✏️ Edit Story
+        </a>
+      </div>
+    </div>
+
+    <!-- Comments Section (LocalStorage Synchronized) -->
+    <section class="mt-12 pt-8 border-t border-slate-800">
+      <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+        <span>💬</span> Discussion (<span id="commentsCount">0</span>)
+      </h3>
+
+      <!-- Add Comment Form -->
+      <form onsubmit="handleCommentSubmit(event)" class="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl mb-8 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input type="text" id="commentAuthor" placeholder="Your Name..." required
+            class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500">
+        </div>
+        <textarea id="commentText" rows="3" placeholder="Share your thoughts on this story..." required
+          class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 leading-relaxed"></textarea>
+        <div class="flex justify-end">
+          <button type="submit" class="px-5 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-xl transition shadow-md shadow-orange-600/20">
+            Post Comment
+          </button>
+        </div>
+      </form>
+
+      <!-- Comments List -->
+      <div id="commentsList" class="space-y-4">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="storage.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = parseInt(urlParams.get('id')) || 1;
+    let currentPost = null;
+
+    function loadArticle() {
+      currentPost = getPostById(postId);
+      const container = document.getElementById('articleView');
+
+      if (!currentPost) {
+        container.innerHTML = `
+          <div class="text-center py-20">
+            <h1 class="text-2xl font-bold text-white mb-2">Article Not Found</h1>
+            <p class="text-slate-400 text-sm mb-6">The story you are looking for does not exist or was deleted.</p>
+            <a href="index.html" class="px-5 py-2.5 bg-orange-600 text-white text-xs font-bold rounded-full">Return Home</a>
+          </div>
+        `;
+        document.getElementById('engagementBar').style.display = 'none';
+        return;
+      }
+
+      // Record view count
+      incrementViews(postId);
+
+      // Set Page Title
+      document.title = `${currentPost.title} | Lumina`;
+
+      // Update Edit Link
+      document.getElementById('editArticleLink').href = `create.html?id=${currentPost.id}`;
+
+      // Format markdown-like content to HTML paragraphs and subheadings
+      const formattedContent = currentPost.content
+        .split('\n\n')
+        .map(block => {
+          if (block.startsWith('### ')) {
+            return `<h3 class="text-xl md:text-2xl font-bold text-white mt-8 mb-4">${block.replace('### ', '')}</h3>`;
+          } else if (block.startsWith('1. ') || block.startsWith('- ')) {
+            const items = block.split('\n').map(line => `<li class="ml-4 list-disc text-slate-300 mb-1.5">${line.replace(/^[-*]|\d+\.\s*/, '')}</li>`).join('');
+            return `<ul class="my-4 space-y-1">${items}</ul>`;
+          } else {
+            return `<p class="text-slate-300 text-base md:text-lg leading-relaxed font-serif mb-6">${block}</p>`;
+          }
+        })
+        .join('');
+
+      container.innerHTML = `
+        <header class="space-y-4 mb-8">
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30">
+              ${currentPost.category}
+            </span>
+            <span class="text-xs text-slate-500">• ${currentPost.readTime}</span>
+            <span class="text-xs text-slate-500">• Published on ${currentPost.date}</span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold font-serif leading-tight text-white">
+            ${currentPost.title}
+          </h1>
+
+          <!-- Author Box -->
+          <div class="flex items-center justify-between py-4 border-y border-slate-800">
+            <div class="flex items-center gap-3">
+              <img src="${currentPost.authorAvatar}" alt="${currentPost.author}" class="w-11 h-11 rounded-full object-cover border border-slate-700">
+              <div>
+                <p class="text-sm font-bold text-white">${currentPost.author}</p>
+                <p class="text-xs text-slate-400">Technical Writer & Engineer</p>
+              </div>
+            </div>
+            <div class="text-xs text-slate-400">
+              👁️ <span class="font-bold text-slate-200">${currentPost.views || 1}</span> reads
+            </div>
+          </div>
+        </header>
+
+        <!-- Cover Image -->
+        <div class="w-full h-72 sm:h-96 md:h-[420px] rounded-3xl overflow-hidden mb-10 border border-slate-800 shadow-2xl">
+          <img src="${currentPost.coverImage}" alt="${currentPost.title}" class="w-full h-full object-cover" />
+        </div>
+
+        <!-- Body Content -->
+        <article class="prose prose-invert max-w-none">
+          ${formattedContent}
+        </article>
+      `;
+
+      updateEngagementState();
+      renderComments();
+    }
+
+    function updateEngagementState() {
+      if (!currentPost) return;
+      document.getElementById('likeCount').innerText = currentPost.likes || 0;
+      
+      const bookmarked = isBookmarked(postId);
+      document.getElementById('bmIcon').innerText = bookmarked ? '🔖' : '📑';
+      document.getElementById('bmText').innerText = bookmarked ? 'Saved in Reading List' : 'Save to Reading List';
+    }
+
+    function onLikeClicked() {
+      const newCount = toggleLikePost(postId);
+      currentPost.likes = newCount;
+      updateEngagementState();
+    }
+
+    function onBookmarkClicked() {
+      toggleBookmark(postId);
+      updateEngagementState();
+    }
+
+    function copyArticleLink() {
+      navigator.clipboard.writeText(window.location.href);
+      alert("Story link copied to clipboard!");
+    }
+
+    // Comments Logic
+    function renderComments() {
+      const comments = getComments(postId);
+      document.getElementById('commentsCount').innerText = comments.length;
+      const list = document.getElementById('commentsList');
+
+      if (comments.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-500 italic">No comments yet. Start the conversation!</p>`;
+        return;
+      }
+
+      list.innerHTML = comments.map(c => `
+        <div class="p-4 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-1">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-orange-400">${c.author}</span>
+            <span class="text-slate-500 text-[11px]">${c.date}</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">${c.text}</p>
+        </div>
+      `).join('');
+    }
+
+    function handleCommentSubmit(e) {
+      e.preventDefault();
+      const author = document.getElementById('commentAuthor').value.trim();
+      const text = document.getElementById('commentText').value.trim();
+      if (!author || !text) return;
+
+      addComment(postId, author, text);
+      document.getElementById('commentText').value = '';
+      renderComments();
+    }
+
+    // Reading Progress
+    window.addEventListener('scroll', () => {
+      const winScroll = document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      document.getElementById('progressBar').style.width = scrolled + '%';
+    });
+
+    initStorage();
+    loadArticle();
+  </script>
+</body>
+</html>

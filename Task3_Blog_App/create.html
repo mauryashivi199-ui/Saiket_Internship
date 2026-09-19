@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Story Editor | Lumina Studio</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['Newsreader', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white">
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-40 bg-[#0b0f19]/90 backdrop-blur-md border-b border-slate-800/80 px-4 md:px-8 py-3.5">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white font-black text-sm">L</div>
+          <span class="text-lg font-bold text-white">Lumina Studio</span>
+        </a>
+        <span class="text-slate-600">/</span>
+        <span id="pageModeBadge" class="text-xs text-orange-400 font-bold uppercase tracking-wider bg-orange-500/10 px-2.5 py-0.5 rounded-full border border-orange-500/20">Drafting</span>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-full transition">Cancel</a>
+        <button onclick="saveAndPublishStory()" class="px-5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs rounded-full shadow-lg shadow-orange-500/20 transition transform active:scale-95">
+          🚀 Publish to LocalStorage
+        </button>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- Editor Container -->
+  <main class="max-w-6xl mx-auto px-4 md:px-8 py-8 w-full flex-1">
+    
+    <form id="editorForm" onsubmit="event.preventDefault();" class="space-y-6">
+      <input type="hidden" id="editPostId" />
+
+      <!-- Top Metadata Grid (Category, Author, Read Time Badge) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-900/60 p-5 rounded-3xl border border-slate-800">
+        <div>
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Topic / Category</label>
+          <select id="postCategory" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-orange-500">
+            <option value="Artificial Intelligence">Artificial Intelligence</option>
+            <option value="Web Engineering">Web Engineering</option>
+            <option value="UI/UX Design">UI/UX Design</option>
+            <option value="Career & Growth">Career & Growth</option>
+            <option value="Cloud & DevOps">Cloud & DevOps</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Author Name</label>
+          <input type="text" id="postAuthor" value="Shivangi Maurya" required
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500">
+        </div>
+
+        <div>
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Live Stats</label>
+          <div class="flex items-center gap-3 text-xs text-slate-400 pt-2">
+            <span id="wordCount">0 words</span>
+            <span>•</span>
+            <span id="readTimeEstimate">1 min read</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title Input (Medium Style) -->
+      <div>
+        <input type="text" id="postTitle" placeholder="Title of your story..." required
+          class="w-full bg-transparent border-b border-slate-800 focus:border-orange-500 py-4 text-3xl sm:text-4xl md:text-5xl font-bold font-serif text-white placeholder-slate-600 focus:outline-none transition leading-tight">
+      </div>
+
+      <!-- Cover Image Selector -->
+      <div class="bg-slate-900/40 p-5 rounded-3xl border border-slate-800 space-y-3">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Cover Image</label>
+        
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input type="url" id="postCover" placeholder="Paste image URL..." value="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80"
+            class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500">
+          
+          <!-- Preset Buttons -->
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="setPresetCover('ai')" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700">🤖 AI</button>
+            <button type="button" onclick="setPresetCover('code')" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700">💻 Code</button>
+            <button type="button" onclick="setPresetCover('design')" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700">🎨 Design</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Markdown Formatting Toolbar -->
+      <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl">
+        <button type="button" onclick="insertFormat('### ')" class="px-2.5 py-1 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 rounded-lg">H3 Heading</button>
+        <button type="button" onclick="insertFormat('**', '**')" class="px-2.5 py-1 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 rounded-lg">B (Bold)</button>
+        <button type="button" onclick="insertFormat('*', '*')" class="px-2.5 py-1 text-xs italic text-slate-300 hover:text-white bg-slate-800 rounded-lg">I (Italic)</button>
+        <button type="button" onclick="insertFormat('- ')" class="px-2.5 py-1 text-xs text-slate-300 hover:text-white bg-slate-800 rounded-lg">• List</button>
+        <button type="button" onclick="insertFormat('1. ')" class="px-2.5 py-1 text-xs text-slate-300 hover:text-white bg-slate-800 rounded-lg">1. Numbered</button>
+        <button type="button" onclick="insertFormat('```\n', '\n```')" class="px-2.5 py-1 text-xs font-mono text-slate-300 hover:text-white bg-slate-800 rounded-lg">&lt;/&gt; Code</button>
+      </div>
+
+      <!-- Editor & Live Preview Split Columns -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[450px]">
+        <!-- Write Pane -->
+        <div class="flex flex-col">
+          <label class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Markdown Editor</label>
+          <textarea id="postContent" required placeholder="Tell your story here... Use ### for subheadings, - for bullets, and **bold** text."
+            class="w-full flex-1 bg-slate-900/80 border border-slate-800 rounded-3xl p-6 text-sm text-slate-200 font-mono leading-relaxed focus:outline-none focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/60 transition custom-scrollbar min-h-[350px]"></textarea>
+        </div>
+
+        <!-- Preview Pane -->
+        <div class="flex flex-col">
+          <label class="text-xs font-bold text-orange-400 mb-2 uppercase tracking-wider">Live Story Preview</label>
+          <div id="previewPane" class="w-full flex-1 bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 text-slate-300 font-serif overflow-y-auto custom-scrollbar min-h-[350px]">
+            <p class="text-slate-500 italic">Preview will automatically update as you type...</p>
+          </div>
+        </div>
+      </div>
+
+    </form>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="storage.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('id');
+
+    const titleInput = document.getElementById('postTitle');
+    const categorySelect = document.getElementById('postCategory');
+    const authorInput = document.getElementById('postAuthor');
+    const coverInput = document.getElementById('postCover');
+    const contentText = document.getElementById('postContent');
+    const previewPane = document.getElementById('previewPane');
+    const wordCountLbl = document.getElementById('wordCount');
+    const readTimeLbl = document.getElementById('readTimeEstimate');
+    const pageModeBadge = document.getElementById('pageModeBadge');
+
+    const PRESETS = {
+      ai: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80',
+      code: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+      design: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80'
+    };
+
+    function setPresetCover(type) {
+      coverInput.value = PRESETS[type] || PRESETS.ai;
+      updatePreview();
+    }
+
+    function insertFormat(start, end = '') {
+      const startPos = contentText.selectionStart;
+      const endPos = contentText.selectionEnd;
+      const selectedText = contentText.value.substring(startPos, endPos);
+      const replacement = start + selectedText + end;
+      contentText.value = contentText.value.substring(0, startPos) + replacement + contentText.value.substring(endPos);
+      contentText.focus();
+      contentText.selectionEnd = startPos + replacement.length;
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const text = contentText.value;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      wordCountLbl.innerText = `${words} words`;
+      readTimeLbl.innerText = `${Math.max(1, Math.ceil(words / 200))} min read`;
+
+      if (!text.trim()) {
+        previewPane.innerHTML = `<p class="text-slate-500 italic">Preview will automatically update as you type...</p>`;
+        return;
+      }
+
+      const formatted = text
+        .split('\n\n')
+        .map(block => {
+          if (block.startsWith('### ')) {
+            return `<h3 class="text-xl font-bold text-white mt-4 mb-2 font-sans">${block.replace('### ', '')}</h3>`;
+          } else if (block.startsWith('- ') || block.startsWith('1. ')) {
+            const items = block.split('\n').map(l => `<li class="ml-4 list-disc text-slate-300">${l.replace(/^[-*]|\d+\.\s*/, '')}</li>`).join('');
+            return `<ul class="my-2 space-y-1">${items}</ul>`;
+          } else {
+            return `<p class="text-slate-300 text-sm md:text-base leading-relaxed mb-3">${block}</p>`;
+          }
+        })
+        .join('');
+
+      previewPane.innerHTML = formatted;
+    }
+
+    contentText.addEventListener('input', updatePreview);
+    titleInput.addEventListener('input', updatePreview);
+
+    function loadInitialData() {
+      initStorage();
+      if (editId) {
+        const post = getPostById(editId);
+        if (post) {
+          pageModeBadge.innerText = "Editing Story #" + post.id;
+          document.getElementById('editPostId').value = post.id;
+          titleInput.value = post.title;
+          categorySelect.value = post.category;
+          authorInput.value = post.author;
+          coverInput.value = post.coverImage;
+          contentText.value = post.content;
+          updatePreview();
+        }
+      }
+    }
+
+    function saveAndPublishStory() {
+      const title = titleInput.value.trim();
+      const category = categorySelect.value;
+      const author = authorInput.value.trim();
+      const coverImage = coverInput.value.trim();
+      const content = contentText.value.trim();
+      const id = document.getElementById('editPostId').value;
+
+      if (!title || !content) {
+        alert("Please provide both a Title and Content for your story.");
+        return;
+      }
+
+      const savedPosts = savePost({
+        id: id ? parseInt(id) : null,
+        title,
+        category,
+        author,
+        coverImage,
+        content
+      });
+
+      alert("🎉 Story successfully published and saved to LocalStorage!");
+      window.location.href = "index.html";
+    }
+
+    loadInitialData();
+  </script>
+</body>
+</html>
